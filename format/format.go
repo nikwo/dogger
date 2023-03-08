@@ -39,22 +39,6 @@ func (df *defaultFormat) FormatString(logContext context.LogContext) string {
 }
 
 func (df *defaultFormat) MatchVerboseColor(lvl string) string {
-	// var colorize func(a ...interface{}) string
-	// switch lvl {
-	// case "trace":
-	// 	colorize = color.New(color.BgBlack).Add(color.FgHiWhite).SprintFunc()
-	// case "debug":
-	// 	colorize = color.New(color.BgBlack).Add(color.FgHiBlue).SprintFunc()
-	// case "info":
-	// 	colorize = color.New(color.BgBlack).Add(color.FgHiGreen).SprintFunc()
-	// case "warn":
-	// 	colorize = color.New(color.BgBlack).Add(color.FgHiYellow).SprintFunc()
-	// case "error":
-	// 	colorize = color.New(color.BgBlack).Add(color.FgHiRed).SprintFunc()
-	// default:
-	// 	colorize = color.New(color.BgBlack).Add(color.FgWhite).SprintFunc()
-	// }
-	// return colorize(lvl)
 	colorizer, exists := colorizers[lvl]
 	if !exists {
 		return colorizers["default"](lvl)
