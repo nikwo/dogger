@@ -22,10 +22,15 @@ type LogContext interface {
 	Value(key interface{}) interface{}
 }
 
-func NewLogContext(ctx context.Context, lvl level.Level) LogContext {
+func NewLogContext(ctx context.Context, lvl level.Level, callerRecurse ...int) LogContext {
 	var caller string
+	var layer = 0
+	if len(callerRecurse) > 0 {
+		layer += callerRecurse[0]
+	}
+
 	lc := &logContext{Context: ctx, Time: time.Now()}
-	pc, _, _, ok := runtime.Caller(2)
+	pc, _, _, ok := runtime.Caller(2 + layer)
 
 	if !ok {
 		return lc

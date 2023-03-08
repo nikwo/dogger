@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/enescakir/emoji"
 	"github.com/fatih/color"
 	"github.com/nikwo/dogger/context"
 )
@@ -11,6 +12,8 @@ import (
 const (
 	DefaultTimeFormat = time.RFC3339
 )
+
+var dog = emoji.Sprint(":dog:")
 
 var colorizers = map[string]func(...interface{}) string{
 	"trace":   color.New(color.BgBlack).Add(color.FgHiWhite).SprintFunc(),
@@ -31,7 +34,8 @@ type defaultFormat struct {
 
 func (df *defaultFormat) FormatString(logContext context.LogContext) string {
 	return fmt.Sprintf(
-		"[%s] %s %s",
+		"%s [%s] %s %s",
+		dog,
 		df.MatchVerboseColor(logContext.GetLevel().String()),
 		logContext.GetTime().Format(DefaultTimeFormat),
 		logContext.GetCaller(),

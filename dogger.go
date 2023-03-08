@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"sync"
-	"time"
 
 	logCtx "github.com/nikwo/dogger/context"
 	"github.com/nikwo/dogger/format"
@@ -32,8 +32,8 @@ type logger struct {
 
 func newChildLogger() *logger {
 	l := new(logger)
-	log.lock.Lock()
-	defer log.lock.Unlock()
+	lockIO()
+	defer unlockIO()
 	l.lvl = log.lvl
 	l.buffer = bytes.NewBuffer([]byte{})
 	l.formatter = log.formatter
@@ -46,7 +46,7 @@ func (l *logger) acceptedLevel(lvl level.Level) bool {
 
 func createChildLogger(ctx context.Context, lvl level.Level) *logger {
 	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(ctx, lvl)
+	l.ctx = logCtx.NewLogContext(ctx, lvl, 1)
 
 	return l
 }
@@ -69,7 +69,9 @@ func Trace(input interface{}) {
 	}
 
 	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	messages <- inlineBuffer
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(inlineBuffer)
 }
 
 func (l *logger) Trace(input interface{}) {
@@ -79,7 +81,9 @@ func (l *logger) Trace(input interface{}) {
 	}
 
 	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	messages <- l.buffer.Bytes()
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(l.buffer.Bytes())
 }
 
 func Debug(input interface{}) {
@@ -89,7 +93,9 @@ func Debug(input interface{}) {
 	}
 
 	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	messages <- inlineBuffer
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(inlineBuffer)
 }
 
 func (l *logger) Debug(input interface{}) {
@@ -99,7 +105,9 @@ func (l *logger) Debug(input interface{}) {
 	}
 
 	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	messages <- l.buffer.Bytes()
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(l.buffer.Bytes())
 }
 
 func Info(input interface{}) {
@@ -109,7 +117,9 @@ func Info(input interface{}) {
 	}
 
 	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	messages <- inlineBuffer
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(inlineBuffer)
 }
 
 func (l *logger) Info(input interface{}) {
@@ -119,7 +129,9 @@ func (l *logger) Info(input interface{}) {
 	}
 
 	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	messages <- l.buffer.Bytes()
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(l.buffer.Bytes())
 }
 
 func Warn(input interface{}) {
@@ -129,7 +141,9 @@ func Warn(input interface{}) {
 	}
 
 	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	messages <- inlineBuffer
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(inlineBuffer)
 }
 
 func (l *logger) Warn(input interface{}) {
@@ -139,7 +153,9 @@ func (l *logger) Warn(input interface{}) {
 	}
 
 	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	messages <- l.buffer.Bytes()
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(l.buffer.Bytes())
 }
 
 func Error(input interface{}) {
@@ -149,7 +165,9 @@ func Error(input interface{}) {
 	}
 
 	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	messages <- inlineBuffer
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(inlineBuffer)
 }
 
 func (l *logger) Error(input interface{}) {
@@ -160,38 +178,46 @@ func (l *logger) Error(input interface{}) {
 	}
 
 	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	messages <- l.buffer.Bytes()
+	lockIO()
+	defer unlockIO()
+	_, _ = writer.Write(l.buffer.Bytes())
 }
 
 var (
+	log    *logger
+	writer io.Writer
+)
+
+func init() {
 	log = &logger{
 		lvl:       level.TRACE,
 		formatter: format.DefaultFormatter(),
 	}
-	writer   = os.Stdout
-	messages = make(chan []byte, 100)
-)
-
-func init() {
-	go background(context.Background())
+	writer = os.Stdout
 }
 
-func background(ctx context.Context) {
-	for {
-		select {
-		case buffer := <-messages:
-			_, _ = writer.Write(buffer)
-		case <-ctx.Done():
-			for len(messages) > 0 {
-				<-time.Tick(time.Millisecond * 100)
-			}
-			return
-		}
-	}
+func lockIO() {
+	log.lock.Lock()
+}
+
+func unlockIO() {
+	log.lock.Unlock()
 }
 
 func SetLevel(level level.Level) {
-	log.lock.Lock()
-	defer log.lock.Unlock()
+	lockIO()
+	defer unlockIO()
 	log.lvl = level
+}
+
+func SetWriter(customWriter io.Writer) {
+	lockIO()
+	defer unlockIO()
+	writer = customWriter
+}
+
+func SetFormatter(formatter format.Format) {
+	lockIO()
+	defer unlockIO()
+	log.formatter = formatter
 }
