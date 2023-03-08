@@ -25,16 +25,18 @@ func main() {
 	ctx := context.Background()
 	dogger.WithContext(ctx).Trace("hello")
 	dogger.Debug("world")
+	dogger.WithContext(ctx).WithFields("chiba", "inu").Info(emoji.Sprintf("i :heart:  pugs!"))
 	dogger.Info("dogs aren't cute")
 	dogger.WithContext(ctx).Error("error: dogs are cute, you've lied!")
 }
 ```
 It produces output in stdout:
 ```text
-🐶 [trace] 2023-03-08T17:22:15+03:00 /$HOME/GolandProjects/dogger/example/main.go(main.main:10) hello
-🐶 [debug] 2023-03-08T17:22:15+03:00 /$HOME/GolandProjects/dogger/example/main.go(main.main:11) world
-🐶 [info] 2023-03-08T17:22:15+03:00 /$HOME/GolandProjects/dogger/example/main.go(main.main:12) dogs aren't cute
-🐶 [error] 2023-03-08T17:22:15+03:00 /$HOME/GolandProjects/dogger/example/main.go(main.main:13) error: dogs are cute, you've lied!
+🐶 [trace] 2023-03-08T18:08:42+03:00 /$HOME/dogger/example/main.go(main.main:12) message="hello"
+🐶 [debug] 2023-03-08T18:08:42+03:00 /$HOME/dogger/example/main.go(main.main:13) message="world"
+🐶 [info] 2023-03-08T18:08:42+03:00 /$HOME/dogger/example/main.go(main.main:14) entry="chiba" value="inu" message="i ❤️  pugs!"
+🐶 [info] 2023-03-08T18:08:42+03:00 /$HOME/dogger/example/main.go(main.main:15) message="dogs aren't cute"
+🐶 [error] 2023-03-08T18:08:42+03:00 /$HOME/dogger/example/main.go(main.main:16) message="error: dogs are cute, you've lied!"
 ```
 
 Log level could be updated in any time with

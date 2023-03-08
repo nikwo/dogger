@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"os"
-	"sync"
-
 	logCtx "github.com/nikwo/dogger/context"
 	"github.com/nikwo/dogger/format"
 	"github.com/nikwo/dogger/level"
+	"github.com/nikwo/dogger/utility"
+	"io"
+	"os"
+	"sync"
 )
 
 type Logger interface {
 	WithContext(ctx context.Context) Logger
+	WithFields(entry string, value interface{}) Logger
 	Trace(input interface{})
 	Debug(input interface{})
 	Info(input interface{})
@@ -28,6 +29,7 @@ type logger struct {
 	ctx       logCtx.LogContext
 	buffer    *bytes.Buffer
 	formatter format.Format
+	fields    map[string]interface{}
 }
 
 func newChildLogger() *logger {
@@ -52,13 +54,25 @@ func createChildLogger(ctx context.Context, lvl level.Level) *logger {
 }
 
 func WithContext(ctx context.Context) Logger {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(ctx, level.TRACE)
+	l := createChildLogger(ctx, level.TRACE)
 	return l
 }
 
 func (l *logger) WithContext(ctx context.Context) Logger {
 	l.ctx = logCtx.NewLogContext(ctx, level.TRACE)
+	return l
+}
+
+func WithFields(entry string, value interface{}) Logger {
+	l := createChildLogger(context.Background(), level.TRACE)
+	l.fields = make(map[string]interface{})
+	l.fields[entry] = value
+	return l
+}
+
+func (l *logger) WithFields(entry string, value interface{}) Logger {
+	l.fields = make(map[string]interface{})
+	l.fields[entry] = value
 	return l
 }
 
@@ -68,10 +82,8 @@ func Trace(input interface{}) {
 		return
 	}
 
-	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(inlineBuffer)
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func (l *logger) Trace(input interface{}) {
@@ -80,10 +92,8 @@ func (l *logger) Trace(input interface{}) {
 		return
 	}
 
-	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(l.buffer.Bytes())
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func Debug(input interface{}) {
@@ -92,10 +102,8 @@ func Debug(input interface{}) {
 		return
 	}
 
-	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(inlineBuffer)
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func (l *logger) Debug(input interface{}) {
@@ -104,10 +112,8 @@ func (l *logger) Debug(input interface{}) {
 		return
 	}
 
-	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(l.buffer.Bytes())
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func Info(input interface{}) {
@@ -116,10 +122,8 @@ func Info(input interface{}) {
 		return
 	}
 
-	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(inlineBuffer)
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func (l *logger) Info(input interface{}) {
@@ -128,10 +132,8 @@ func (l *logger) Info(input interface{}) {
 		return
 	}
 
-	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(l.buffer.Bytes())
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func Warn(input interface{}) {
@@ -140,10 +142,8 @@ func Warn(input interface{}) {
 		return
 	}
 
-	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(inlineBuffer)
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func (l *logger) Warn(input interface{}) {
@@ -152,10 +152,8 @@ func (l *logger) Warn(input interface{}) {
 		return
 	}
 
-	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(l.buffer.Bytes())
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func Error(input interface{}) {
@@ -164,10 +162,8 @@ func Error(input interface{}) {
 		return
 	}
 
-	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-	lockIO()
-	defer unlockIO()
-	_, _ = writer.Write(inlineBuffer)
+	l.FormOutput(input)
+	l.Flush()
 }
 
 func (l *logger) Error(input interface{}) {
@@ -177,7 +173,21 @@ func (l *logger) Error(input interface{}) {
 		return
 	}
 
-	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	l.FormOutput(input)
+	l.Flush()
+}
+
+func (l *logger) FormOutput(input interface{}) {
+	inlineBuffer := make([]byte, 0, 100)
+	inlineBuffer = append(inlineBuffer, utility.Bytes(l.formatter.FormatString(l.ctx))...)
+	for entry, field := range l.fields {
+		inlineBuffer = append(inlineBuffer, utility.Bytes(fmt.Sprintf(" entry=\"%s\" value=\"%+v\"", entry, field))...)
+	}
+	inlineBuffer = append(inlineBuffer, utility.Bytes(fmt.Sprintf(" message=\"%+v\"\n", input))...)
+	_, _ = l.buffer.Write(inlineBuffer)
+}
+
+func (l *logger) Flush() {
 	lockIO()
 	defer unlockIO()
 	_, _ = writer.Write(l.buffer.Bytes())
