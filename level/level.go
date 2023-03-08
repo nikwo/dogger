@@ -1,49 +1,45 @@
 package level
 
-import (
-	"github.com/nikwo/dogger/errors"
-)
+type Level int
 
 const (
-	TRACE = iota
+	TRACE Level = iota
 	DEBUG
 	INFO
 	WARN
 	ERROR
 )
 
-type Level int
-
-func (l Level) String() string {
-	switch l {
-	case TRACE:
-		return "trace"
-	case DEBUG:
-		return "debug"
-	case INFO:
-		return "info"
-	case WARN:
-		return "warn"
-	case ERROR:
-		return "error"
-	default:
-		return "info"
-	}
+var levelsString = map[Level]string{
+	TRACE: "trace",
+	DEBUG: "debug",
+	INFO:  "info",
+	WARN:  "warn",
+	ERROR: "error",
 }
 
-func LogLevelFromString(level string) (Level, error) {
-	switch level {
-	case "trace":
-		return TRACE, nil
-	case "debug":
-		return DEBUG, nil
-	case "info":
-		return INFO, nil
-	case "warn":
-		return WARN, nil
-	case "error":
-		return ERROR, nil
-	default:
-		return INFO, errors.ErrInvalidLevelString
+var stringLevels = map[string]Level{
+	"trace": TRACE,
+	"debug": DEBUG,
+	"info":  INFO,
+	"warn":  WARN,
+	"error": ERROR,
+}
+
+func (l Level) String() string {
+	level, exists := levelsString[l]
+	if !exists {
+		return levelsString[INFO]
 	}
+
+	return level
+}
+
+func LogLevelFromString(level string) Level {
+	str, exists := stringLevels[level]
+	if !exists {
+		return stringLevels["info"]
+	}
+
+	return str
 }

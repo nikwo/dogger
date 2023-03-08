@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	logCtx "github.com/nikwo/dogger/context"
-	"github.com/nikwo/dogger/format"
-	"github.com/nikwo/dogger/level"
-	"io"
 	"os"
 	"sync"
 	"time"
+
+	logCtx "github.com/nikwo/dogger/context"
+	"github.com/nikwo/dogger/format"
+	"github.com/nikwo/dogger/level"
 )
 
 type Logger interface {
@@ -44,6 +44,13 @@ func (l *logger) acceptedLevel(lvl level.Level) bool {
 	return l.lvl <= lvl
 }
 
+func createChildLogger(ctx context.Context, lvl level.Level) *logger {
+	l := newChildLogger()
+	l.ctx = logCtx.NewLogContext(ctx, lvl)
+
+	return l
+}
+
 func WithContext(ctx context.Context) Logger {
 	l := newChildLogger()
 	l.ctx = logCtx.NewLogContext(ctx, level.TRACE)
@@ -56,104 +63,117 @@ func (l *logger) WithContext(ctx context.Context) Logger {
 }
 
 func Trace(input interface{}) {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(context.Background(), level.TRACE)
-	if l.acceptedLevel(level.TRACE) {
-		inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-		messages <- inlineBuffer
+	l := createChildLogger(context.Background(), level.TRACE)
+	if !l.acceptedLevel(level.TRACE) {
+		return
 	}
+
+	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
+	messages <- inlineBuffer
 }
 
 func (l *logger) Trace(input interface{}) {
 	l.ctx.SetLevel(level.TRACE)
-	if l.acceptedLevel(level.TRACE) {
-		_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-		messages <- l.buffer.Bytes()
+	if !l.acceptedLevel(level.TRACE) {
+		return
 	}
+
+	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	messages <- l.buffer.Bytes()
 }
 
 func Debug(input interface{}) {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(context.Background(), level.DEBUG)
-	if l.acceptedLevel(level.DEBUG) {
-		inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-		messages <- inlineBuffer
+	l := createChildLogger(context.Background(), level.DEBUG)
+	if !l.acceptedLevel(level.DEBUG) {
+		return
 	}
+
+	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
+	messages <- inlineBuffer
 }
 
 func (l *logger) Debug(input interface{}) {
 	l.ctx.SetLevel(level.DEBUG)
-	if l.acceptedLevel(level.DEBUG) {
-		_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-		messages <- l.buffer.Bytes()
+	if !l.acceptedLevel(level.DEBUG) {
+		return
 	}
+
+	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	messages <- l.buffer.Bytes()
 }
 
 func Info(input interface{}) {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(context.Background(), level.INFO)
-	if l.acceptedLevel(level.INFO) {
-		inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-		messages <- inlineBuffer
+	l := createChildLogger(context.Background(), level.INFO)
+	if !l.acceptedLevel(level.INFO) {
+		return
 	}
+
+	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
+	messages <- inlineBuffer
 }
 
 func (l *logger) Info(input interface{}) {
 	l.ctx.SetLevel(level.INFO)
-	if l.acceptedLevel(level.INFO) {
-		_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-		messages <- l.buffer.Bytes()
+	if !l.acceptedLevel(level.INFO) {
+		return
 	}
+
+	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	messages <- l.buffer.Bytes()
 }
 
 func Warn(input interface{}) {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(context.Background(), level.WARN)
-	if l.acceptedLevel(level.WARN) {
-		inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-		messages <- inlineBuffer
+	l := createChildLogger(context.Background(), level.WARN)
+	if !l.acceptedLevel(level.WARN) {
+		return
 	}
+
+	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
+	messages <- inlineBuffer
 }
 
 func (l *logger) Warn(input interface{}) {
 	l.ctx.SetLevel(level.WARN)
-	if l.acceptedLevel(level.WARN) {
-		_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-		messages <- l.buffer.Bytes()
+	if !l.acceptedLevel(level.WARN) {
+		return
 	}
+
+	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	messages <- l.buffer.Bytes()
 }
 
 func Error(input interface{}) {
-	l := newChildLogger()
-	l.ctx = logCtx.NewLogContext(context.Background(), level.ERROR)
-	if l.acceptedLevel(level.ERROR) {
-		inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
-		messages <- inlineBuffer
+	l := createChildLogger(context.Background(), level.ERROR)
+	if !l.acceptedLevel(level.ERROR) {
+		return
 	}
+
+	inlineBuffer := ([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input))
+	messages <- inlineBuffer
 }
 
 func (l *logger) Error(input interface{}) {
 	l.ctx.SetLevel(level.ERROR)
-	if l.acceptedLevel(level.ERROR) {
-		_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
-		messages <- l.buffer.Bytes()
+
+	if !l.acceptedLevel(level.ERROR) {
+		return
 	}
+
+	_, _ = l.buffer.Write(([]byte)(l.formatter.FormatString(l.ctx) + fmt.Sprintf(" %+v\n", input)))
+	messages <- l.buffer.Bytes()
 }
 
 var (
-	log      *logger
-	writer   io.Writer
-	messages chan []byte
+	log = &logger{
+		lvl:       level.TRACE,
+		formatter: format.DefaultFormatter(),
+	}
+	writer   = os.Stdout
+	messages = make(chan []byte, 100)
 )
 
 func init() {
-	log = &logger{}
-	log.lvl = level.TRACE
-	writer = os.Stdout
-	log.formatter = format.DefaultFormatter()
-	ctx := context.Background()
-	messages = make(chan []byte, 100)
-	go background(ctx)
+	go background(context.Background())
 }
 
 func background(ctx context.Context) {

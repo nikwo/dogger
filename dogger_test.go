@@ -1,55 +1,41 @@
 package dogger
 
 import (
-	"github.com/nikwo/dogger/level"
 	"testing"
+
+	"github.com/nikwo/dogger/level"
 )
 
 func TestLevelTrace(t *testing.T) {
-	result, err := level.LogLevelFromString("trace")
-	if err != nil {
-		t.Fail()
-	}
+	result := level.LogLevelFromString("trace")
 	if result != level.TRACE {
 		t.Fail()
 	}
 }
 
 func TestLevelDebug(t *testing.T) {
-	result, err := level.LogLevelFromString("debug")
-	if err != nil {
-		t.Fail()
-	}
+	result := level.LogLevelFromString("debug")
 	if result != level.DEBUG {
 		t.Fail()
 	}
 }
 
 func TestLevelInfo(t *testing.T) {
-	result, err := level.LogLevelFromString("info")
-	if err != nil {
-		t.Fail()
-	}
+	result := level.LogLevelFromString("info")
 	if result != level.INFO {
 		t.Fail()
 	}
 }
 
 func TestLevelWarn(t *testing.T) {
-	result, err := level.LogLevelFromString("warn")
-	if err != nil {
-		t.Fail()
-	}
+	result := level.LogLevelFromString("warn")
 	if result != level.WARN {
 		t.Fail()
 	}
 }
 
 func TestLevelError(t *testing.T) {
-	result, err := level.LogLevelFromString("error")
-	if err != nil {
-		t.Fail()
-	}
+	result := level.LogLevelFromString("error")
 	if result != level.ERROR {
 		t.Fail()
 	}

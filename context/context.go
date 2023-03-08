@@ -2,10 +2,11 @@ package context
 
 import (
 	"context"
-	"github.com/nikwo/dogger/level"
-	"github.com/nikwo/dogger/utility"
 	"runtime"
 	"time"
+
+	"github.com/nikwo/dogger/level"
+	"github.com/nikwo/dogger/utility"
 )
 
 type LogContext interface {
@@ -25,13 +26,17 @@ func NewLogContext(ctx context.Context, lvl level.Level) LogContext {
 	var caller string
 	lc := &logContext{Context: ctx, Time: time.Now()}
 	pc, _, _, ok := runtime.Caller(2)
-	if ok {
-		details := runtime.FuncForPC(pc)
-		file, line := details.FileLine(pc)
-		caller = utility.FormatCaller(file, details.Name(), line)
-		lc.Caller = caller
-		lc.Level = lvl
+
+	if !ok {
+		return lc
 	}
+
+	details := runtime.FuncForPC(pc)
+	file, line := details.FileLine(pc)
+	caller = utility.FormatCaller(file, details.Name(), line)
+	lc.Caller = caller
+	lc.Level = lvl
+
 	return lc
 }
 

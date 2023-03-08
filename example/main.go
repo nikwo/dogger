@@ -2,20 +2,21 @@ package main
 
 import (
 	"context"
-	"github.com/nikwo/dogger"
 	"sync"
+
+	"github.com/nikwo/dogger"
 )
 
 func main() {
 	dogger.WithContext(context.Background()).Trace("Hello")
 	dogger.Debug("World")
 	wg := sync.WaitGroup{}
-	wg.Add(10000)
 	for i := 0; i < 10000; i++ {
-		go func(counter int, wg *sync.WaitGroup) {
+		wg.Add(1)
+		go func(counter int) {
 			dogger.Info(counter)
 			wg.Done()
-		}(i, &wg)
+		}(i)
 	}
 	wg.Wait()
 }
