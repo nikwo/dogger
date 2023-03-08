@@ -1,2 +1,1 @@
-# dogger
-Do nothing special, but logger
+# Dogger - doggy-style logger :clown_face:
