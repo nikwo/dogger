@@ -9,7 +9,6 @@ import (
 	"github.com/nikwo/dogger/level"
 	"github.com/nikwo/dogger/utility"
 	"io"
-	"os"
 	"sync"
 )
 
@@ -135,14 +134,6 @@ var (
 	log    *logger
 	writer io.Writer
 )
-
-func init() {
-	log = &logger{
-		lvl:       level.TRACE,
-		formatter: format.DefaultFormatter(),
-	}
-	writer = os.Stdout
-}
 
 func lockIO() {
 	log.lock.Lock()

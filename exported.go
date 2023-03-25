@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/nikwo/dogger/format"
 	"io"
+	"os"
 
 	"github.com/nikwo/dogger/level"
 )
@@ -90,4 +91,12 @@ func SetFormatter(formatter format.Format) {
 
 func ExportDefaultLogger() Logger {
 	return log
+}
+
+func init() {
+	log = &logger{
+		lvl:       level.TRACE,
+		formatter: format.DefaultFormatter(),
+	}
+	writer = os.Stdout
 }
