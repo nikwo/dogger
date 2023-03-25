@@ -53,20 +53,8 @@ func createChildLogger(ctx context.Context, lvl level.Level) *logger {
 	return l
 }
 
-func WithContext(ctx context.Context) Logger {
-	l := createChildLogger(ctx, level.TRACE)
-	return l
-}
-
 func (l *logger) WithContext(ctx context.Context) Logger {
 	l.ctx = logCtx.NewLogContext(ctx, level.TRACE)
-	return l
-}
-
-func WithFields(entry string, value interface{}) Logger {
-	l := createChildLogger(context.Background(), level.TRACE)
-	l.fields = make(map[string]interface{})
-	l.fields[entry] = value
 	return l
 }
 
@@ -76,34 +64,14 @@ func (l *logger) WithFields(entry string, value interface{}) Logger {
 	return l
 }
 
-func Trace(input interface{}) {
-	l := createChildLogger(context.Background(), level.TRACE)
-	if !l.acceptedLevel(level.TRACE) {
-		return
-	}
-
-	l.FormOutput(input)
-	l.Flush()
-}
-
 func (l *logger) Trace(input interface{}) {
 	l.ctx.SetLevel(level.TRACE)
 	if !l.acceptedLevel(level.TRACE) {
 		return
 	}
 
-	l.FormOutput(input)
-	l.Flush()
-}
-
-func Debug(input interface{}) {
-	l := createChildLogger(context.Background(), level.DEBUG)
-	if !l.acceptedLevel(level.DEBUG) {
-		return
-	}
-
-	l.FormOutput(input)
-	l.Flush()
+	l.formOutput(input)
+	l.flush()
 }
 
 func (l *logger) Debug(input interface{}) {
@@ -112,18 +80,8 @@ func (l *logger) Debug(input interface{}) {
 		return
 	}
 
-	l.FormOutput(input)
-	l.Flush()
-}
-
-func Info(input interface{}) {
-	l := createChildLogger(context.Background(), level.INFO)
-	if !l.acceptedLevel(level.INFO) {
-		return
-	}
-
-	l.FormOutput(input)
-	l.Flush()
+	l.formOutput(input)
+	l.flush()
 }
 
 func (l *logger) Info(input interface{}) {
@@ -132,18 +90,8 @@ func (l *logger) Info(input interface{}) {
 		return
 	}
 
-	l.FormOutput(input)
-	l.Flush()
-}
-
-func Warn(input interface{}) {
-	l := createChildLogger(context.Background(), level.WARN)
-	if !l.acceptedLevel(level.WARN) {
-		return
-	}
-
-	l.FormOutput(input)
-	l.Flush()
+	l.formOutput(input)
+	l.flush()
 }
 
 func (l *logger) Warn(input interface{}) {
@@ -152,18 +100,8 @@ func (l *logger) Warn(input interface{}) {
 		return
 	}
 
-	l.FormOutput(input)
-	l.Flush()
-}
-
-func Error(input interface{}) {
-	l := createChildLogger(context.Background(), level.ERROR)
-	if !l.acceptedLevel(level.ERROR) {
-		return
-	}
-
-	l.FormOutput(input)
-	l.Flush()
+	l.formOutput(input)
+	l.flush()
 }
 
 func (l *logger) Error(input interface{}) {
@@ -173,11 +111,11 @@ func (l *logger) Error(input interface{}) {
 		return
 	}
 
-	l.FormOutput(input)
-	l.Flush()
+	l.formOutput(input)
+	l.flush()
 }
 
-func (l *logger) FormOutput(input interface{}) {
+func (l *logger) formOutput(input interface{}) {
 	inlineBuffer := make([]byte, 0, 100)
 	inlineBuffer = append(inlineBuffer, utility.Bytes(l.formatter.FormatString(l.ctx))...)
 	for entry, field := range l.fields {
@@ -187,7 +125,7 @@ func (l *logger) FormOutput(input interface{}) {
 	_, _ = l.buffer.Write(inlineBuffer)
 }
 
-func (l *logger) Flush() {
+func (l *logger) flush() {
 	lockIO()
 	defer unlockIO()
 	_, _ = writer.Write(l.buffer.Bytes())
@@ -212,22 +150,4 @@ func lockIO() {
 
 func unlockIO() {
 	log.lock.Unlock()
-}
-
-func SetLevel(level level.Level) {
-	lockIO()
-	defer unlockIO()
-	log.lvl = level
-}
-
-func SetWriter(customWriter io.Writer) {
-	lockIO()
-	defer unlockIO()
-	writer = customWriter
-}
-
-func SetFormatter(formatter format.Format) {
-	lockIO()
-	defer unlockIO()
-	log.formatter = formatter
 }
